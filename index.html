@@ -49,7 +49,13 @@
     }
     button.secondary { background: #ffb6c1; color: #5a3a5a; }
     button.danger { background: #ff6b6b; }
-    button.small { padding: 8px 12px; font-size: 13px; width: auto; display: inline-block; margin: 4px 4px 0 0; }
+    button.small {
+      padding: 8px 12px;
+      font-size: 13px;
+      width: auto;
+      display: inline-block;
+      margin: 4px 4px 0 0;
+    }
     .points {
       font-size: 32px;
       font-weight: bold;
@@ -109,6 +115,19 @@
       border-bottom: 1px solid #ffd6e0;
       padding-bottom: 4px;
     }
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 14px;
+      z-index: 999;
+      display: none;
+    }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -124,8 +143,8 @@
       <div id="auth-error" class="error"></div>
       <input type="email" id="email" placeholder="Email">
       <input type="password" id="password" placeholder="密碼（至少6位）">
-      <button onclick="register()">註冊</button>
-      <button class="secondary" onclick="login()">登入</button>
+      <button type="button" onclick="register()">註冊</button>
+      <button type="button" class="secondary" onclick="login()">登入</button>
     </div>
 
     <!-- 配對 -->
@@ -137,15 +156,15 @@
       <div class="points" id="my-code">------</div>
       <p class="status">或者輸入對方的配對碼：</p>
       <input type="text" id="partner-code" placeholder="輸入6位配對碼" maxlength="6">
-      <button onclick="pairWithCode()">確認配對</button>
-      <button class="secondary" onclick="logout()">登出</button>
+      <button type="button" onclick="pairWithCode()">確認配對</button>
+      <button type="button" class="secondary" onclick="logout()">登出</button>
     </div>
 
     <!-- 主畫面 -->
     <div id="home-screen" class="hidden">
       <div class="nav">
-        <button id="nav-home" class="active" onclick="switchTab('home')">點數</button>
-        <button id="nav-tasks" onclick="switchTab('tasks')">任務</button>
+        <button type="button" id="nav-home" class="active" onclick="switchTab('home')">點數</button>
+        <button type="button" id="nav-tasks" onclick="switchTab('tasks')">任務</button>
       </div>
 
       <!-- 點數 Tab -->
@@ -158,9 +177,9 @@
 
         <h3>送點數給對方</h3>
         <input type="number" id="send-amount" placeholder="輸入要送的點數" min="1">
-        <button onclick="sendPoints()">送出點數</button>
+        <button type="button" onclick="sendPoints()">送出點數</button>
         <div id="home-message" class="success"></div>
-        <button class="secondary" onclick="logout()" style="margin-top:12px;">登出</button>
+        <button type="button" class="secondary" onclick="logout()" style="margin-top:12px;">登出</button>
       </div>
 
       <!-- 任務 Tab -->
@@ -170,7 +189,7 @@
           <div class="section-title">建立自訂任務</div>
           <input type="text" id="new-task-title" placeholder="任務內容（例如：親一下對方）">
           <input type="number" id="new-task-reward" placeholder="獎勵點數（從你帳戶扣除）" min="1">
-          <button onclick="createCustomTask()">建立任務</button>
+          <button type="button" onclick="createCustomTask()">建立任務</button>
           <div id="task-create-msg" class="success"></div>
         </div>
 
@@ -198,6 +217,8 @@
 
   </div>
 
+  <div id="toast" class="toast"></div>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAqmFiLSEKgYNlscQkwGc4TVlEeh_GV-F8",
@@ -223,6 +244,13 @@
       { id: "daily_4", title: "送對方一個小驚喜（訊息/貼圖/關心）", reward: 10 },
       { id: "daily_5", title: "一起做一件事（食飯/睇片/傾偈）", reward: 12 }
     ];
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      setTimeout(() => t.style.display = "none", 2000);
+    }
 
     auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -320,7 +348,7 @@
         if (partnerDoc.exists) {
           document.getElementById("partner-name").textContent = partnerDoc.data().email.split("@")[0];
         }
-        switchTab("home");
+        // 唔自動切換 tab，保持用戶而家睇緊嘅位置
       } else {
         showScreen("pair-screen");
         document.getElementById("my-code").textContent = userData.pairCode;
@@ -428,7 +456,7 @@
           createdAt: new Date()
         });
 
-        msgEl.textContent = "任務已建立！對方而家應該見得到";
+        msgEl.textContent = "任務已建立！";
         msgEl.className = "success";
         document.getElementById("new-task-title").value = "";
         document.getElementById("new-task-reward").value = "";
@@ -451,7 +479,6 @@
         const todayStart = new Date();
         todayStart.setHours(0,0,0,0);
 
-        // 簡化查詢：只查自己作為 assignee 的每日任務
         const dailySnap = await db.collection("tasks")
           .where("assigneeId", "==", currentUser.uid)
           .where("type", "==", "daily")
@@ -472,7 +499,7 @@
           let btnHtml = "";
 
           if (!existing) {
-            btnHtml = `<button class="small" onclick="claimDailyTask('${dt.id}', '${dt.title}', ${dt.reward})">我完成了</button>`;
+            btnHtml = `<button type="button" class="small" onclick="claimDailyTask('${dt.id}', '${dt.title}', ${dt.reward})">我完成了</button>`;
           } else if (existing.status === "completed") {
             statusHtml = `<span class="badge completed">等待對方確認</span>`;
           } else if (existing.status === "confirmed") {
@@ -488,11 +515,10 @@
           `;
         });
 
-        // 2. 等待我確認的任務（對方完成的，無論是自訂定每日）
+        // 2. 等待我確認的任務
         const pendingConfirm = document.getElementById("pending-confirm-list");
         pendingConfirm.innerHTML = "";
 
-        // 查詢所有 status = completed 且 assignee 係對方 的任務
         const confirmSnap = await db.collection("tasks")
           .where("status", "==", "completed")
           .get();
@@ -500,15 +526,14 @@
         let hasPending = false;
         confirmSnap.forEach(doc => {
           const t = doc.data();
-          // 只顯示對方完成、等待我確認的
-          if (t.assigneeId === userData.partnerId || (t.type === "daily" && t.assigneeId === userData.partnerId)) {
+          if (t.assigneeId === userData.partnerId) {
             hasPending = true;
             pendingConfirm.innerHTML += `
               <div class="task-item">
                 <div class="title">${t.title} <span class="badge completed">等待確認</span></div>
                 <div class="meta">獎勵：<span class="reward">${t.reward} 點</span> · ${t.type === "daily" ? "每日任務" : "自訂任務"}</div>
-                <button class="small" onclick="confirmTask('${doc.id}', ${t.reward}, '${t.assigneeId}')">確認完成</button>
-                <button class="small danger" onclick="rejectTask('${doc.id}', ${t.reward}, '${t.creatorId}')">拒絕</button>
+                <button type="button" class="small" onclick="confirmTask('${doc.id}', ${t.reward}, '${t.assigneeId}')">確認完成</button>
+                <button type="button" class="small danger" onclick="rejectTask('${doc.id}', ${t.reward}, '${t.creatorId}')">拒絕</button>
               </div>
             `;
           }
@@ -531,17 +556,11 @@
           mySnap.forEach(doc => {
             const t = doc.data();
             let statusText = "";
-            let actionHtml = "";
 
             if (t.status === "pending") statusText = `<span class="badge pending">等待對方完成</span>`;
-            else if (t.status === "completed") {
-              statusText = `<span class="badge completed">對方已完成</span>`;
-              // 確認按鈕已在上面「等待我確認」區塊
-            } else if (t.status === "confirmed") {
-              statusText = `<span class="badge confirmed">已確認</span>`;
-            } else if (t.status === "rejected") {
-              statusText = `<span class="badge pending">已拒絕</span>`;
-            }
+            else if (t.status === "completed") statusText = `<span class="badge completed">對方已完成</span>`;
+            else if (t.status === "confirmed") statusText = `<span class="badge confirmed">已確認</span>`;
+            else if (t.status === "rejected") statusText = `<span class="badge pending">已拒絕</span>`;
 
             myCreated.innerHTML += `
               <div class="task-item">
@@ -571,7 +590,7 @@
 
             if (t.status === "pending") {
               statusText = `<span class="badge pending">待完成</span>`;
-              actionHtml = `<button class="small" onclick="completeTask('${doc.id}')">我完成了</button>`;
+              actionHtml = `<button type="button" class="small" onclick="completeTask('${doc.id}')">我完成了</button>`;
             } else if (t.status === "completed") {
               statusText = `<span class="badge completed">等待對方確認</span>`;
             } else if (t.status === "confirmed") {
@@ -590,7 +609,7 @@
 
       } catch (err) {
         console.error(err);
-        alert("載入任務失敗：" + err.message + "\n\n如果提到 index，請去 Firebase Console 建立索引。");
+        showToast("載入任務失敗");
       }
     }
 
@@ -606,10 +625,10 @@
           status: "completed",
           createdAt: new Date()
         });
-        alert("已提交！等待對方確認後先會加點數");
+        showToast("已提交，等待對方確認");
         loadTasks();
       } catch (err) {
-        alert("提交失敗：" + err.message);
+        showToast("提交失敗");
       }
     }
 
@@ -619,16 +638,15 @@
           status: "completed",
           completedAt: new Date()
         });
-        alert("已通知對方，等待確認");
+        showToast("已通知對方");
         loadTasks();
       } catch (err) {
-        alert("操作失敗：" + err.message);
+        showToast("操作失敗");
       }
     }
 
     async function confirmTask(taskId, reward, assigneeId) {
       try {
-        // 把點數轉給完成者
         await db.collection("users").doc(assigneeId).update({
           points: firebase.firestore.FieldValue.increment(reward)
         });
@@ -638,11 +656,16 @@
           confirmedAt: new Date()
         });
 
-        alert("已確認，點數已發給對方！");
+        showToast("已確認，點數已發放");
         loadTasks();
-        await loadUserData();
+        // 只更新點數顯示，唔強制切換畫面
+        const doc = await db.collection("users").doc(currentUser.uid).get();
+        if (doc.exists) {
+          userData = doc.data();
+          document.getElementById("my-points").textContent = userData.points;
+        }
       } catch (err) {
-        alert("確認失敗：" + err.message);
+        showToast("確認失敗");
       }
     }
 
@@ -650,7 +673,6 @@
       if (!confirm("確定拒絕？點數會退回給發起人")) return;
 
       try {
-        // 退回點數給發起人（如果係自訂任務）
         if (creatorId && creatorId !== "system") {
           await db.collection("users").doc(creatorId).update({
             points: firebase.firestore.FieldValue.increment(reward)
@@ -660,11 +682,11 @@
         await db.collection("tasks").doc(taskId).update({
           status: "rejected"
         });
-        alert("已拒絕");
+        showToast("已拒絕");
         loadTasks();
         await loadUserData();
       } catch (err) {
-        alert("操作失敗：" + err.message);
+        showToast("操作失敗");
       }
     }
   </script>
