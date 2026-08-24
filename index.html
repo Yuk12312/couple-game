@@ -11,67 +11,113 @@
       background: linear-gradient(135deg, #fff0f5, #ffe4e9);
       color: #5a3a5a;
       min-height: 100vh;
-      padding: 20px;
+      padding: 16px;
+      padding-bottom: 40px;
     }
     .container { max-width: 420px; margin: 0 auto; }
     .card {
       background: white;
       border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 8px 20px rgba(255, 105, 180, 0.15);
-      margin-bottom: 20px;
+      padding: 20px;
+      box-shadow: 0 8px 20px rgba(255, 105, 180, 0.12);
+      margin-bottom: 16px;
     }
-    h1, h2 { text-align: center; color: #ff69b4; margin-bottom: 16px; }
-    input {
+    h1, h2, h3 { text-align: center; color: #ff69b4; margin-bottom: 12px; }
+    h3 { font-size: 16px; margin-top: 8px; }
+    input, textarea, select {
       width: 100%;
-      padding: 14px;
+      padding: 12px;
       border: 2px solid #ffb6c1;
       border-radius: 12px;
-      font-size: 16px;
-      margin-bottom: 12px;
+      font-size: 15px;
+      margin-bottom: 10px;
       outline: none;
+      font-family: inherit;
     }
-    input:focus { border-color: #ff69b4; }
+    input:focus, textarea:focus { border-color: #ff69b4; }
     button {
       width: 100%;
-      padding: 14px;
+      padding: 13px;
       background: #ff69b4;
       color: white;
       border: none;
       border-radius: 12px;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: bold;
       cursor: pointer;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     button.secondary { background: #ffb6c1; color: #5a3a5a; }
+    button.danger { background: #ff6b6b; }
+    button.small { padding: 8px 12px; font-size: 13px; width: auto; display: inline-block; margin: 4px; }
     .points {
-      font-size: 28px;
+      font-size: 32px;
       font-weight: bold;
       text-align: center;
       color: #ff69b4;
-      margin: 16px 0;
+      margin: 12px 0;
     }
-    .hidden { display: none; }
-    .error { color: #e74c3c; text-align: center; margin-bottom: 10px; font-size: 14px; }
-    .success { color: #27ae60; text-align: center; margin-bottom: 10px; font-size: 14px; }
+    .hidden { display: none !important; }
+    .error { color: #e74c3c; text-align: center; margin-bottom: 8px; font-size: 13px; }
+    .success { color: #27ae60; text-align: center; margin-bottom: 8px; font-size: 13px; }
     .partner-info {
       background: #fff0f5;
-      padding: 12px;
+      padding: 10px;
       border-radius: 12px;
       text-align: center;
+      margin-bottom: 14px;
+      font-size: 14px;
+    }
+    .status { text-align: center; margin: 8px 0; font-size: 13px; color: #888; }
+    .nav {
+      display: flex;
+      gap: 8px;
       margin-bottom: 16px;
     }
-    .status { text-align: center; margin: 10px 0; font-size: 14px; color: #888; }
+    .nav button {
+      flex: 1;
+      padding: 10px;
+      font-size: 14px;
+      margin-bottom: 0;
+    }
+    .nav button.active { background: #ff1493; }
+    .task-item {
+      background: #fff8fa;
+      border: 1px solid #ffd6e0;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .task-item .title { font-weight: bold; margin-bottom: 4px; }
+    .task-item .meta { font-size: 12px; color: #888; margin-bottom: 8px; }
+    .task-item .reward { color: #ff69b4; font-weight: bold; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      margin-left: 6px;
+    }
+    .badge.pending { background: #ffeaa7; color: #d35400; }
+    .badge.completed { background: #81ecec; color: #00b894; }
+    .badge.confirmed { background: #55efc4; color: #00b894; }
+    .section-title {
+      font-size: 15px;
+      font-weight: bold;
+      color: #ff69b4;
+      margin: 16px 0 8px;
+      border-bottom: 1px solid #ffd6e0;
+      padding-bottom: 4px;
+    }
   </style>
 
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
   <div class="container">
+
     <!-- 登入 / 註冊 -->
     <div id="auth-screen" class="card">
       <h1>❤️ 情侶好感遊戲</h1>
@@ -96,22 +142,60 @@
     </div>
 
     <!-- 主畫面 -->
-    <div id="home-screen" class="card hidden">
-      <h2>甜蜜點數</h2>
-      <div class="points" id="my-points">0</div>
-      <div class="partner-info">
-        已配對：<span id="partner-name">—</span>
+    <div id="home-screen" class="hidden">
+      <div class="nav">
+        <button id="nav-home" class="active" onclick="switchTab('home')">點數</button>
+        <button id="nav-tasks" onclick="switchTab('tasks')">任務</button>
       </div>
-      <h3 style="margin-bottom:12px;">送點數給對方</h3>
-      <input type="number" id="send-amount" placeholder="輸入要送的點數" min="1">
-      <button onclick="sendPoints()">送出點數</button>
-      <div id="home-message" class="success"></div>
-      <button class="secondary" onclick="logout()" style="margin-top:20px;">登出</button>
+
+      <!-- 點數 Tab -->
+      <div id="tab-home" class="card">
+        <h2>甜蜜點數</h2>
+        <div class="points" id="my-points">0</div>
+        <div class="partner-info">
+          已配對：<span id="partner-name">—</span>
+        </div>
+
+        <h3>送點數給對方</h3>
+        <input type="number" id="send-amount" placeholder="輸入要送的點數" min="1">
+        <button onclick="sendPoints()">送出點數</button>
+        <div id="home-message" class="success"></div>
+        <button class="secondary" onclick="logout()" style="margin-top:12px;">登出</button>
+      </div>
+
+      <!-- 任務 Tab -->
+      <div id="tab-tasks" class="hidden">
+        <div class="card">
+          <h2>任務中心</h2>
+
+          <div class="section-title">建立自訂任務</div>
+          <input type="text" id="new-task-title" placeholder="任務內容（例如：親一下對方）">
+          <input type="number" id="new-task-reward" placeholder="獎勵點數（從你帳戶扣除）" min="1">
+          <button onclick="createCustomTask()">建立任務</button>
+          <div id="task-create-msg" class="success"></div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">每日任務（需對方確認）</div>
+          <div id="daily-tasks-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">我發起的任務</div>
+          <div id="my-created-tasks"></div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">對方發起的任務 / 待確認</div>
+          <div id="partner-tasks"></div>
+        </div>
+      </div>
     </div>
+
   </div>
 
   <script>
-    // Firebase 設定
+    // ========== Firebase 設定 ==========
     const firebaseConfig = {
       apiKey: "AIzaSyAqmFiLSEKgYNlscQkwGc4TVlEeh_GV-F8",
       authDomain: "couple-card-game-d8852.firebaseapp.com",
@@ -128,7 +212,18 @@
 
     let currentUser = null;
     let userData = null;
+    let partnerData = null;
 
+    // 預設每日任務
+    const DAILY_TASKS = [
+      { id: "daily_1", title: "對對方說一句「我愛你」", reward: 5 },
+      { id: "daily_2", title: "親一下對方", reward: 8 },
+      { id: "daily_3", title: "擁抱對方至少10秒", reward: 8 },
+      { id: "daily_4", title: "送對方一個小驚喜（訊息/貼圖/關心）", reward: 10 },
+      { id: "daily_5", title: "一起做一件事（食飯/睇片/傾偈）", reward: 12 }
+    ];
+
+    // ========== 登入狀態 ==========
     auth.onAuthStateChanged(async (user) => {
       if (user) {
         currentUser = user;
@@ -139,12 +234,29 @@
     });
 
     function showScreen(id) {
-      document.getElementById("auth-screen").classList.add("hidden");
-      document.getElementById("pair-screen").classList.add("hidden");
-      document.getElementById("home-screen").classList.add("hidden");
+      ["auth-screen", "pair-screen", "home-screen"].forEach(s => {
+        document.getElementById(s).classList.add("hidden");
+      });
       document.getElementById(id).classList.remove("hidden");
     }
 
+    function switchTab(tab) {
+      document.getElementById("tab-home").classList.add("hidden");
+      document.getElementById("tab-tasks").classList.add("hidden");
+      document.getElementById("nav-home").classList.remove("active");
+      document.getElementById("nav-tasks").classList.remove("active");
+
+      if (tab === "home") {
+        document.getElementById("tab-home").classList.remove("hidden");
+        document.getElementById("nav-home").classList.add("active");
+      } else {
+        document.getElementById("tab-tasks").classList.remove("hidden");
+        document.getElementById("nav-tasks").classList.add("active");
+        loadTasks();
+      }
+    }
+
+    // ========== 註冊 / 登入 ==========
     async function register() {
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
@@ -198,6 +310,7 @@
       return Math.floor(100000 + Math.random() * 900000).toString();
     }
 
+    // ========== 載入用戶資料 ==========
     async function loadUserData() {
       const doc = await db.collection("users").doc(currentUser.uid).get();
       if (!doc.exists) return;
@@ -210,14 +323,17 @@
         
         const partnerDoc = await db.collection("users").doc(userData.partnerId).get();
         if (partnerDoc.exists) {
-          document.getElementById("partner-name").textContent = partnerDoc.data().email.split("@")[0];
+          partnerData = partnerDoc.data();
+          document.getElementById("partner-name").textContent = partnerData.email.split("@")[0];
         }
+        switchTab("home");
       } else {
         showScreen("pair-screen");
         document.getElementById("my-code").textContent = userData.pairCode;
       }
     }
 
+    // ========== 配對 ==========
     async function pairWithCode() {
       const code = document.getElementById("partner-code").value.trim();
       const errorEl = document.getElementById("pair-error");
@@ -244,21 +360,18 @@
 
         const partnerId = codeDoc.data().uid;
 
-        await db.collection("users").doc(currentUser.uid).update({
-          partnerId: partnerId
-        });
-        await db.collection("users").doc(partnerId).update({
-          partnerId: currentUser.uid
-        });
+        await db.collection("users").doc(currentUser.uid).update({ partnerId: partnerId });
+        await db.collection("users").doc(partnerId).update({ partnerId: currentUser.uid });
 
         successEl.textContent = "配對成功！";
-        setTimeout(() => loadUserData(), 1000);
+        setTimeout(() => loadUserData(), 800);
 
       } catch (err) {
         errorEl.textContent = "配對失敗：" + err.message;
       }
     }
 
+    // ========== 送點數 ==========
     async function sendPoints() {
       const amount = parseInt(document.getElementById("send-amount").value);
       const msgEl = document.getElementById("home-message");
@@ -280,7 +393,6 @@
         await db.collection("users").doc(currentUser.uid).update({
           points: firebase.firestore.FieldValue.increment(-amount)
         });
-
         await db.collection("users").doc(userData.partnerId).update({
           points: firebase.firestore.FieldValue.increment(amount)
         });
@@ -293,6 +405,252 @@
       } catch (err) {
         msgEl.textContent = "送出失敗：" + err.message;
         msgEl.className = "error";
+      }
+    }
+
+    // ========== 任務系統 ==========
+    async function createCustomTask() {
+      const title = document.getElementById("new-task-title").value.trim();
+      const reward = parseInt(document.getElementById("new-task-reward").value);
+      const msgEl = document.getElementById("task-create-msg");
+      msgEl.textContent = "";
+
+      if (!title || !reward || reward <= 0) {
+        msgEl.textContent = "請填寫任務內容同獎勵點數";
+        msgEl.className = "error";
+        return;
+      }
+
+      if (userData.points < reward) {
+        msgEl.textContent = "你的點數不足支付獎勵";
+        msgEl.className = "error";
+        return;
+      }
+
+      try {
+        // 先扣除發起人點數（作為獎勵池）
+        await db.collection("users").doc(currentUser.uid).update({
+          points: firebase.firestore.FieldValue.increment(-reward)
+        });
+
+        await db.collection("tasks").add({
+          title: title,
+          reward: reward,
+          creatorId: currentUser.uid,
+          assigneeId: userData.partnerId,
+          type: "custom",
+          status: "pending", // pending → completed → confirmed
+          createdAt: new Date()
+        });
+
+        msgEl.textContent = "任務已建立！";
+        msgEl.className = "success";
+        document.getElementById("new-task-title").value = "";
+        document.getElementById("new-task-reward").value = "";
+        await loadUserData();
+        loadTasks();
+
+      } catch (err) {
+        msgEl.textContent = "建立失敗：" + err.message;
+        msgEl.className = "error";
+      }
+    }
+
+    async function loadTasks() {
+      if (!userData || !userData.partnerId) return;
+
+      // 每日任務
+      const dailyList = document.getElementById("daily-tasks-list");
+      dailyList.innerHTML = "";
+
+      // 查詢今天已完成的每日任務
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      const dailySnap = await db.collection("tasks")
+        .where("type", "==", "daily")
+        .where("assigneeId", "==", currentUser.uid)
+        .get();
+
+      const completedDailyIds = {};
+      dailySnap.forEach(doc => {
+        const t = doc.data();
+        if (t.createdAt && t.createdAt.toDate() >= today) {
+          completedDailyIds[t.dailyId] = { id: doc.id, status: t.status };
+        }
+      });
+
+      DAILY_TASKS.forEach(dt => {
+        const existing = completedDailyIds[dt.id];
+        let statusHtml = "";
+        let btnHtml = "";
+
+        if (!existing) {
+          btnHtml = `<button class="small" onclick="claimDailyTask('${dt.id}', '${dt.title}', ${dt.reward})">我完成了</button>`;
+        } else if (existing.status === "completed") {
+          statusHtml = `<span class="badge completed">等待對方確認</span>`;
+        } else if (existing.status === "confirmed") {
+          statusHtml = `<span class="badge confirmed">已確認 +${dt.reward}</span>`;
+        }
+
+        dailyList.innerHTML += `
+          <div class="task-item">
+            <div class="title">${dt.title} ${statusHtml}</div>
+            <div class="meta">獎勵：<span class="reward">+${dt.reward} 點</span></div>
+            ${btnHtml}
+          </div>
+        `;
+      });
+
+      // 我發起的任務
+      const myCreated = document.getElementById("my-created-tasks");
+      myCreated.innerHTML = "";
+
+      const mySnap = await db.collection("tasks")
+        .where("creatorId", "==", currentUser.uid)
+        .orderBy("createdAt", "desc")
+        .limit(20)
+        .get();
+
+      if (mySnap.empty) {
+        myCreated.innerHTML = `<p class="status">暫時沒有</p>`;
+      } else {
+        mySnap.forEach(doc => {
+          const t = doc.data();
+          let statusText = "";
+          let actionHtml = "";
+
+          if (t.status === "pending") statusText = `<span class="badge pending">等待對方完成</span>`;
+          else if (t.status === "completed") {
+            statusText = `<span class="badge completed">對方已完成，等待你確認</span>`;
+            actionHtml = `
+              <button class="small" onclick="confirmTask('${doc.id}', ${t.reward}, '${t.assigneeId}')">確認完成</button>
+              <button class="small danger" onclick="rejectTask('${doc.id}', ${t.reward})">拒絕</button>
+            `;
+          } else if (t.status === "confirmed") {
+            statusText = `<span class="badge confirmed">已確認</span>`;
+          }
+
+          myCreated.innerHTML += `
+            <div class="task-item">
+              <div class="title">${t.title} ${statusText}</div>
+              <div class="meta">獎勵：<span class="reward">${t.reward} 點</span></div>
+              ${actionHtml}
+            </div>
+          `;
+        });
+      }
+
+      // 對方發起的任務（我是 assignee）
+      const partnerList = document.getElementById("partner-tasks");
+      partnerList.innerHTML = "";
+
+      const partnerSnap = await db.collection("tasks")
+        .where("assigneeId", "==", currentUser.uid)
+        .where("type", "==", "custom")
+        .orderBy("createdAt", "desc")
+        .limit(20)
+        .get();
+
+      if (partnerSnap.empty) {
+        partnerList.innerHTML = `<p class="status">暫時沒有</p>`;
+      } else {
+        partnerSnap.forEach(doc => {
+          const t = doc.data();
+          let statusText = "";
+          let actionHtml = "";
+
+          if (t.status === "pending") {
+            statusText = `<span class="badge pending">待完成</span>`;
+            actionHtml = `<button class="small" onclick="completeTask('${doc.id}')">我完成了</button>`;
+          } else if (t.status === "completed") {
+            statusText = `<span class="badge completed">等待對方確認</span>`;
+          } else if (t.status === "confirmed") {
+            statusText = `<span class="badge confirmed">已確認 +${t.reward}</span>`;
+          }
+
+          partnerList.innerHTML += `
+            <div class="task-item">
+              <div class="title">${t.title} ${statusText}</div>
+              <div class="meta">獎勵：<span class="reward">+${t.reward} 點</span></div>
+              ${actionHtml}
+            </div>
+          `;
+        });
+      }
+    }
+
+    // 每日任務：我完成了（建立一筆等待確認的記錄）
+    async function claimDailyTask(dailyId, title, reward) {
+      try {
+        await db.collection("tasks").add({
+          dailyId: dailyId,
+          title: title,
+          reward: reward,
+          creatorId: "system",
+          assigneeId: currentUser.uid,
+          type: "daily",
+          status: "completed", // 直接進入等待確認
+          createdAt: new Date()
+        });
+        alert("已提交，等待對方確認後才會加點數");
+        loadTasks();
+      } catch (err) {
+        alert("提交失敗：" + err.message);
+      }
+    }
+
+    // 自訂任務：我完成了
+    async function completeTask(taskId) {
+      try {
+        await db.collection("tasks").doc(taskId).update({
+          status: "completed",
+          completedAt: new Date()
+        });
+        alert("已通知對方，等待確認");
+        loadTasks();
+      } catch (err) {
+        alert("操作失敗：" + err.message);
+      }
+    }
+
+    // 發起人確認任務
+    async function confirmTask(taskId, reward, assigneeId) {
+      try {
+        // 把點數轉給完成者
+        await db.collection("users").doc(assigneeId).update({
+          points: firebase.firestore.FieldValue.increment(reward)
+        });
+
+        await db.collection("tasks").doc(taskId).update({
+          status: "confirmed",
+          confirmedAt: new Date()
+        });
+
+        alert("已確認，點數已發給對方");
+        loadTasks();
+        await loadUserData();
+      } catch (err) {
+        alert("確認失敗：" + err.message);
+      }
+    }
+
+    // 拒絕任務（退回點數給發起人）
+    async function rejectTask(taskId, reward) {
+      if (!confirm("確定拒絕？點數會退回給你")) return;
+
+      try {
+        await db.collection("users").doc(currentUser.uid).update({
+          points: firebase.firestore.FieldValue.increment(reward)
+        });
+        await db.collection("tasks").doc(taskId).update({
+          status: "rejected"
+        });
+        alert("已拒絕，點數已退回");
+        loadTasks();
+        await loadUserData();
+      } catch (err) {
+        alert("操作失敗：" + err.message);
       }
     }
   </script>
