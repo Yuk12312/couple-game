@@ -1,1 +1,58 @@
-hi
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>情侶專屬好感遊戲</title>
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <div class="container">
+
+    <!-- 登入 / 註冊 畫面 -->
+    <div id="auth-screen" class="card">
+      <h1>❤️ 情侶好感遊戲</h1>
+      <div id="auth-error" class="error"></div>
+      
+      <input type="email" id="email" placeholder="Email">
+      <input type="password" id="password" placeholder="密碼（至少6位）">
+      
+      <button onclick="register()">註冊</button>
+      <button class="secondary" onclick="login()">登入</button>
+    </div>
+
+    <!-- 配對畫面 -->
+    <div id="pair-screen" class="card hidden">
+      <h2>情侶配對</h2>
+      <div id="pair-error" class="error"></div>
+      <div id="pair-success" class="success"></div>
+      
+      <p class="status">你的配對碼：</p>
+      <div class="points" id="my-code">------</div>
+      
+      <p class="status">或者輸入對方的配對碼：</p>
+      <input type="text" id="partner-code" placeholder="輸入6位配對碼" maxlength="6">
+      <button onclick="pairWithCode()">確認配對</button>
+      
+      <button class="secondary" onclick="logout()">登出</button>
+    </div>
+
+    <!-- 主畫面 -->
+    <div id="home-screen" class="card hidden">
+      <h2>甜蜜點數</h2>
+      <div class="points" id="my-points">0</div>
+      
+      <div class="partner-info">
+        已配對：<span id="partner-name">—</span>
+      </div>
+      
+      <h3 style="margin-bottom:12px;">送點數給對方</h3>
+      <input type="number" id="send-amount" placeholder="輸入要送的點數" min="1">
+      <button onclick="sendPoints()">送出點數</button>
+      
+      <div id="home-message" class="success"></div>
