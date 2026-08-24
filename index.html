@@ -307,29 +307,23 @@
     let currentUser = null;
     let userData = null;
 
-    // ========== 卡片資料（20張） ==========
     const CARD_POOL = [
-      // N
       { id: 1, name: "讚美卡", rarity: "N", effect: "對方要連續講出你3個優點", execution: "認真講出3個不重複的優點" },
       { id: 2, name: "關心卡", rarity: "N", effect: "對方要主動問你今天過得怎麼樣", execution: "認真傾聽並回應" },
       { id: 3, name: "擁抱卡", rarity: "N", effect: "獲得一個溫暖的擁抱", execution: "擁抱至少15秒" },
       { id: 4, name: "笑聲卡", rarity: "N", effect: "對方要講一個笑話逗你笑", execution: "講笑話直到你笑為止" },
-      // R
       { id: 5, name: "外賣卡", rarity: "R", effect: "對方幫你叫一次外賣", execution: "你選餐廳，對方付錢叫" },
       { id: 6, name: "按摩卡", rarity: "R", effect: "獲得10分鐘肩膀或頭部按摩", execution: "按摩10分鐘" },
       { id: 7, name: "電影卡", rarity: "R", effect: "一起睇一部你想睇的電影/劇", execution: "今晚一起睇" },
       { id: 8, name: "小禮物卡", rarity: "R", effect: "對方送你一個小禮物（50元內）", execution: "三天內兌現" },
-      // SR
       { id: 9, name: "約會卡", rarity: "SR", effect: "安排一次專屬約會", execution: "一週內完成一次約會" },
       { id: 10, name: "煮飯卡", rarity: "SR", effect: "對方親自煮一頓飯給你", execution: "親自下廚一餐" },
       { id: 11, name: "道歉卡", rarity: "SR", effect: "對方正式道歉並說明改善", execution: "認真道歉+寫下改善方法" },
       { id: 12, name: "驚喜卡", rarity: "SR", effect: "對方準備一個小驚喜", execution: "三天內給你驚喜" },
-      // SSR
       { id: 13, name: "冷戰終結卡", rarity: "SSR", effect: "立即結束冷戰，恢復正常", execution: "放下爭執，恢復親密" },
       { id: 14, name: "願望卡", rarity: "SSR", effect: "對方幫你實現一個小願望", execution: "在合理範圍內實現" },
       { id: 15, name: "專屬日卡", rarity: "SSR", effect: "擁有完整一天的決定權", execution: "那天聽你的安排" },
       { id: 16, name: "情書卡", rarity: "SSR", effect: "收到一封手寫情書", execution: "親筆寫一封情書" },
-      // UR
       { id: 17, name: "神秘大禮卡", rarity: "UR", effect: "獲得一個用心的大驚喜", execution: "準備一個真正的驚喜" },
       { id: 18, name: "旅行卡", rarity: "UR", effect: "規劃一次短途旅行", execution: "一個月內完成短途旅行" },
       { id: 19, name: "無條件支持卡", rarity: "UR", effect: "對方無條件支持你一個決定", execution: "全力支持你的選擇" },
@@ -351,7 +345,6 @@
       setTimeout(() => t.style.display = "none", 2200);
     }
 
-    // ========== Auth ==========
     auth.onAuthStateChanged(async (user) => {
       if (user) {
         currentUser = user;
@@ -542,19 +535,54 @@
           dailyList.innerHTML += `<div class="task-item"><div class="title">${dt.title} ${status}</div><div class="meta">獎勵 <span class="reward">+${dt.reward}</span></div>${btn}</div>`;
         });
 
-        // 等待確認
+        // 等待確認（包含普通任務 + 卡片使用）
         const pending = document.getElementById("pending-confirm-list");
         pending.innerHTML = "";
         const confSnap = await db.collection("tasks").where("status", "==", "completed").get();
         let has = false;
         confSnap.forEach(doc => {
           const t = doc.data();
-          if (t.assigneeId === userData.partnerId) {
+          // 只顯示對方需要我確認的
+          if (t.assigneeId === userData.partnerId || (t.type === "card_use" && t.assigneeId === currentUser.uid)) {
+            // 修正邏輯：
+            // 普通任務：assignee 完成 → creator 確認（所以 creator 係我，assignee 係對方）
+            // 卡片使用：使用者 (creator) 申請 → 對方 (assignee) 確認
+            // 所以等待我確認的情況：
+            // 1. 普通/每日：t.creatorId === currentUser.uid && t.status === "completed"
+            // 2. 卡片使用：t.assigneeId === currentUser.uid && t.type === "card_use"
+          }
+        });
+
+        // 重新正確過濾
+        confSnap.forEach(doc => {
+          const t = doc.data();
+          let shouldShow = false;
+          let isCard = t.type === "card_use";
+
+          if (isCard) {
+            // 卡片使用：assignee 係需要確認的人
+            if (t.assigneeId === currentUser.uid) shouldShow = true;
+          } else {
+            // 普通任務：creator 係需要確認的人（對方完成後）
+            if (t.creatorId === currentUser.uid || (t.type === "daily" && t.assigneeId === userData.partnerId)) {
+              // 為了簡化，每日任務的確認者係對方
+              if (t.type === "daily" && t.assigneeId === userData.partnerId) shouldShow = true;
+              else if (t.type === "custom" && t.creatorId === currentUser.uid) shouldShow = true;
+            }
+          }
+
+          if (shouldShow) {
             has = true;
-            pending.innerHTML += `<div class="task-item"><div class="title">${t.title} <span class="badge completed">待確認</span></div>
-              <div class="meta">獎勵 <span class="reward">${t.reward}</span></div>
-              <button type="button" class="small" onclick="confirmTask('${doc.id}',${t.reward},'${t.assigneeId}')">確認</button>
-              <button type="button" class="small danger" onclick="rejectTask('${doc.id}',${t.reward},'${t.creatorId}')">拒絕</button></div>`;
+            const title = isCard ? `🃏 使用卡片：${t.card?.name || t.title}` : t.title;
+            const extra = isCard ? `<div class="meta">效果：${t.card?.effect || ""}</div><div class="meta">執行：${t.card?.execution || ""}</div>` : "";
+            pending.innerHTML += `
+              <div class="task-item">
+                <div class="title">${title} <span class="badge completed">待確認</span></div>
+                ${extra}
+                <div class="meta">${isCard ? "卡片使用申請" : "獎勵 " + t.reward}</div>
+                <button type="button" class="small" onclick="confirmTask('${doc.id}', ${t.reward || 0}, '${t.assigneeId}', '${t.type}', '${t.creatorId}')">確認</button>
+                <button type="button" class="small danger" onclick="rejectTask('${doc.id}', ${t.reward || 0}, '${t.creatorId}', '${t.type}')">拒絕</button>
+              </div>`;
           }
         });
         if (!has) pending.innerHTML = `<p class="status">暫時沒有</p>`;
@@ -566,8 +594,9 @@
         if (mySnap.empty) myC.innerHTML = `<p class="status">暫時沒有</p>`;
         else mySnap.forEach(doc => {
           const t = doc.data();
-          let s = t.status === "pending" ? "等待完成" : t.status === "completed" ? "對方已完成" : t.status === "confirmed" ? "已確認" : "已拒絕";
-          myC.innerHTML += `<div class="task-item"><div class="title">${t.title}</div><div class="meta">${s} · 獎勵 ${t.reward}</div></div>`;
+          let s = t.status === "pending" ? "等待完成" : t.status === "completed" ? "等待確認" : t.status === "confirmed" ? "已確認" : "已拒絕";
+          const prefix = t.type === "card_use" ? "🃏 " : "";
+          myC.innerHTML += `<div class="task-item"><div class="title">${prefix}${t.title || t.card?.name}</div><div class="meta">${s}</div></div>`;
         });
 
         // 對方發起
@@ -605,11 +634,18 @@
       } catch (e) { showToast("失敗"); }
     }
 
-    async function confirmTask(id, reward, assigneeId) {
+    async function confirmTask(id, reward, assigneeId, type, creatorId) {
       try {
-        await db.collection("users").doc(assigneeId).update({ points: firebase.firestore.FieldValue.increment(reward) });
-        await db.collection("tasks").doc(id).update({ status: "confirmed", confirmedAt: new Date() });
-        showToast("已確認，點數已發放");
+        if (type === "card_use") {
+          // 卡片使用確認：只標記完成
+          await db.collection("tasks").doc(id).update({ status: "confirmed", confirmedAt: new Date() });
+          showToast("已確認卡片使用");
+        } else {
+          // 普通任務：發放點數
+          await db.collection("users").doc(assigneeId).update({ points: firebase.firestore.FieldValue.increment(reward) });
+          await db.collection("tasks").doc(id).update({ status: "confirmed", confirmedAt: new Date() });
+          showToast("已確認，點數已發放");
+        }
         loadTasks();
         const doc = await db.collection("users").doc(currentUser.uid).get();
         if (doc.exists) {
@@ -619,17 +655,35 @@
       } catch (e) { showToast("失敗"); }
     }
 
-    async function rejectTask(id, reward, creatorId) {
-      if (!confirm("確定拒絕？點數會退回")) return;
+    async function rejectTask(id, reward, creatorId, type) {
+      if (!confirm("確定拒絕？")) return;
       try {
-        if (creatorId && creatorId !== "system") {
-          await db.collection("users").doc(creatorId).update({ points: firebase.firestore.FieldValue.increment(reward) });
+        if (type === "card_use") {
+          // 拒絕卡片使用：把卡片退回給使用者
+          const taskDoc = await db.collection("tasks").doc(id).get();
+          const t = taskDoc.data();
+          if (t.card && t.creatorId) {
+            const userRef = db.collection("users").doc(t.creatorId);
+            const userSnap = await userRef.get();
+            if (userSnap.exists) {
+              const inv = userSnap.data().inventory || [];
+              inv.push(t.card);
+              await userRef.update({ inventory: inv });
+            }
+          }
+          await db.collection("tasks").doc(id).update({ status: "rejected" });
+          showToast("已拒絕，卡片已退回");
+        } else {
+          // 普通任務拒絕：退回點數
+          if (creatorId && creatorId !== "system") {
+            await db.collection("users").doc(creatorId).update({ points: firebase.firestore.FieldValue.increment(reward) });
+          }
+          await db.collection("tasks").doc(id).update({ status: "rejected" });
+          showToast("已拒絕");
         }
-        await db.collection("tasks").doc(id).update({ status: "rejected" });
-        showToast("已拒絕");
         loadTasks();
         await loadUserData();
-      } catch (e) { showToast("失敗"); }
+      } catch (e) { console.error(e); showToast("操作失敗"); }
     }
 
     // ========== 卡片系統 ==========
@@ -700,13 +754,13 @@
       }
 
       list.innerHTML = inv.map((c, idx) => {
-        // 找到真實 index
-        const realIdx = userData.inventory.findIndex((x, i) => x.id === c.id && x.name === c.name && i >= 0);
+        // 用真實 index
+        const realIndex = userData.inventory.findIndex((item, i) => item === c || (item.id === c.id && item.name === c.name));
         return `<div class="card-item">
           <div class="name">${c.name} <span class="badge ${c.rarity}">${c.rarity}</span></div>
           <div class="meta">效果：${c.effect}</div>
           <div class="meta">執行：${c.execution}</div>
-          <button type="button" class="small" onclick="useCard(${userData.inventory.indexOf(c)})">使用</button>
+          <button type="button" class="small" onclick="useCard(${realIndex})">使用（需對方確認）</button>
         </div>`;
       }).join("");
     }
@@ -714,16 +768,33 @@
     async function useCard(index) {
       const card = userData.inventory[index];
       if (!card) return;
-      if (!confirm(`使用「${card.name}」？\n效果：${card.effect}`)) return;
+      if (!confirm(`申請使用「${card.name}」？\n效果：${card.effect}\n\n對方確認後才會正式生效。`)) return;
 
       try {
+        // 1. 先從卡庫移除
         const newInv = [...userData.inventory];
         newInv.splice(index, 1);
         await db.collection("users").doc(currentUser.uid).update({ inventory: newInv });
         userData.inventory = newInv;
-        showToast(`已使用 ${card.name}！請執行：${card.execution}`);
+
+        // 2. 建立卡片使用申請（讓對方確認）
+        await db.collection("tasks").add({
+          type: "card_use",
+          title: `使用卡片：${card.name}`,
+          card: card,
+          reward: 0,
+          creatorId: currentUser.uid,      // 申請人
+          assigneeId: userData.partnerId,  // 需要確認的人
+          status: "completed",             // 直接進入待確認
+          createdAt: new Date()
+        });
+
+        showToast("已發送使用申請，等待對方確認");
         renderInventory();
-      } catch (e) { showToast("使用失敗"); }
+      } catch (e) {
+        console.error(e);
+        showToast("使用失敗");
+      }
     }
 
     async function craftCard(target) {
