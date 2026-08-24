@@ -48,6 +48,14 @@
     }
     button.secondary { background: #ffb6c1; color: #5a3a5a; }
     button.danger { background: #ff6b6b; }
+    button.link-btn {
+      background: transparent;
+      color: #ff69b4;
+      font-size: 14px;
+      font-weight: normal;
+      padding: 8px;
+      margin-top: -4px;
+    }
     button.small {
       padding: 7px 11px;
       font-size: 13px;
@@ -176,10 +184,12 @@
     <div id="auth-screen" class="card">
       <h1>❤️ 情侶好感遊戲</h1>
       <div id="auth-error" class="error"></div>
+      <div id="auth-success" class="success"></div>
       <input type="email" id="email" placeholder="Email">
       <input type="password" id="password" placeholder="密碼（至少6位）">
       <button type="button" onclick="register()">註冊</button>
       <button type="button" class="secondary" onclick="login()">登入</button>
+      <button type="button" class="link-btn" onclick="forgotPassword()">忘記密碼？</button>
     </div>
 
     <!-- 配對 -->
@@ -409,7 +419,9 @@
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
       const errorEl = document.getElementById("auth-error");
+      const successEl = document.getElementById("auth-success");
       errorEl.textContent = "";
+      successEl.textContent = "";
       if (!email || !password) { errorEl.textContent = "請填寫完整"; return; }
       try {
         const cred = await auth.createUserWithEmailAndPassword(email, password);
@@ -426,9 +438,37 @@
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
       const errorEl = document.getElementById("auth-error");
+      const successEl = document.getElementById("auth-success");
       errorEl.textContent = "";
+      successEl.textContent = "";
       try { await auth.signInWithEmailAndPassword(email, password); }
-      catch (err) { errorEl.textContent = "登入失敗"; }
+      catch (err) { errorEl.textContent = "登入失敗，請檢查 Email 或密碼"; }
+    }
+
+    // 忘記密碼
+    async function forgotPassword() {
+      const email = document.getElementById("email").value.trim();
+      const errorEl = document.getElementById("auth-error");
+      const successEl = document.getElementById("auth-success");
+      errorEl.textContent = "";
+      successEl.textContent = "";
+
+      if (!email) {
+        errorEl.textContent = "請先輸入你的 Email";
+        return;
+      }
+
+      try {
+        await auth.sendPasswordResetEmail(email);
+        successEl.textContent = "重設密碼信已寄出！請檢查你的信箱（包括垃圾郵件）";
+        showToast("重設信已寄出");
+      } catch (err) {
+        if (err.code === "auth/user-not-found") {
+          errorEl.textContent = "找不到這個 Email 的帳號";
+        } else {
+          errorEl.textContent = "寄送失敗：" + err.message;
+        }
+      }
     }
 
     function logout() { auth.signOut(); }
@@ -535,40 +575,22 @@
           dailyList.innerHTML += `<div class="task-item"><div class="title">${dt.title} ${status}</div><div class="meta">獎勵 <span class="reward">+${dt.reward}</span></div>${btn}</div>`;
         });
 
-        // 等待確認（包含普通任務 + 卡片使用）
+        // 等待確認
         const pending = document.getElementById("pending-confirm-list");
         pending.innerHTML = "";
         const confSnap = await db.collection("tasks").where("status", "==", "completed").get();
         let has = false;
-        confSnap.forEach(doc => {
-          const t = doc.data();
-          // 只顯示對方需要我確認的
-          if (t.assigneeId === userData.partnerId || (t.type === "card_use" && t.assigneeId === currentUser.uid)) {
-            // 修正邏輯：
-            // 普通任務：assignee 完成 → creator 確認（所以 creator 係我，assignee 係對方）
-            // 卡片使用：使用者 (creator) 申請 → 對方 (assignee) 確認
-            // 所以等待我確認的情況：
-            // 1. 普通/每日：t.creatorId === currentUser.uid && t.status === "completed"
-            // 2. 卡片使用：t.assigneeId === currentUser.uid && t.type === "card_use"
-          }
-        });
 
-        // 重新正確過濾
         confSnap.forEach(doc => {
           const t = doc.data();
           let shouldShow = false;
           let isCard = t.type === "card_use";
 
           if (isCard) {
-            // 卡片使用：assignee 係需要確認的人
             if (t.assigneeId === currentUser.uid) shouldShow = true;
           } else {
-            // 普通任務：creator 係需要確認的人（對方完成後）
-            if (t.creatorId === currentUser.uid || (t.type === "daily" && t.assigneeId === userData.partnerId)) {
-              // 為了簡化，每日任務的確認者係對方
-              if (t.type === "daily" && t.assigneeId === userData.partnerId) shouldShow = true;
-              else if (t.type === "custom" && t.creatorId === currentUser.uid) shouldShow = true;
-            }
+            if (t.type === "daily" && t.assigneeId === userData.partnerId) shouldShow = true;
+            else if (t.type === "custom" && t.creatorId === currentUser.uid) shouldShow = true;
           }
 
           if (shouldShow) {
@@ -637,11 +659,9 @@
     async function confirmTask(id, reward, assigneeId, type, creatorId) {
       try {
         if (type === "card_use") {
-          // 卡片使用確認：只標記完成
           await db.collection("tasks").doc(id).update({ status: "confirmed", confirmedAt: new Date() });
           showToast("已確認卡片使用");
         } else {
-          // 普通任務：發放點數
           await db.collection("users").doc(assigneeId).update({ points: firebase.firestore.FieldValue.increment(reward) });
           await db.collection("tasks").doc(id).update({ status: "confirmed", confirmedAt: new Date() });
           showToast("已確認，點數已發放");
@@ -659,7 +679,6 @@
       if (!confirm("確定拒絕？")) return;
       try {
         if (type === "card_use") {
-          // 拒絕卡片使用：把卡片退回給使用者
           const taskDoc = await db.collection("tasks").doc(id).get();
           const t = taskDoc.data();
           if (t.card && t.creatorId) {
@@ -674,7 +693,6 @@
           await db.collection("tasks").doc(id).update({ status: "rejected" });
           showToast("已拒絕，卡片已退回");
         } else {
-          // 普通任務拒絕：退回點數
           if (creatorId && creatorId !== "system") {
             await db.collection("users").doc(creatorId).update({ points: firebase.firestore.FieldValue.increment(reward) });
           }
@@ -753,9 +771,8 @@
         return;
       }
 
-      list.innerHTML = inv.map((c, idx) => {
-        // 用真實 index
-        const realIndex = userData.inventory.findIndex((item, i) => item === c || (item.id === c.id && item.name === c.name));
+      list.innerHTML = inv.map((c) => {
+        const realIndex = userData.inventory.findIndex((item) => item.id === c.id && item.name === c.name);
         return `<div class="card-item">
           <div class="name">${c.name} <span class="badge ${c.rarity}">${c.rarity}</span></div>
           <div class="meta">效果：${c.effect}</div>
@@ -771,21 +788,19 @@
       if (!confirm(`申請使用「${card.name}」？\n效果：${card.effect}\n\n對方確認後才會正式生效。`)) return;
 
       try {
-        // 1. 先從卡庫移除
         const newInv = [...userData.inventory];
         newInv.splice(index, 1);
         await db.collection("users").doc(currentUser.uid).update({ inventory: newInv });
         userData.inventory = newInv;
 
-        // 2. 建立卡片使用申請（讓對方確認）
         await db.collection("tasks").add({
           type: "card_use",
           title: `使用卡片：${card.name}`,
           card: card,
           reward: 0,
-          creatorId: currentUser.uid,      // 申請人
-          assigneeId: userData.partnerId,  // 需要確認的人
-          status: "completed",             // 直接進入待確認
+          creatorId: currentUser.uid,
+          assigneeId: userData.partnerId,
+          status: "completed",
           createdAt: new Date()
         });
 
