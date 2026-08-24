@@ -5,157 +5,212 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>情侶專屬好感遊戲</title>
   <style>
+    :root {
+      --pink: #ff6b9d;
+      --pink-dark: #ff4580;
+      --pink-light: #ffe0eb;
+      --bg: linear-gradient(160deg, #fff5f8 0%, #ffe8f0 50%, #fff0f5 100%);
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: linear-gradient(135deg, #fff0f5, #ffe4e9);
-      color: #5a3a5a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", sans-serif;
+      background: var(--bg);
+      color: #4a2c4a;
       min-height: 100vh;
-      padding: 14px;
-      padding-bottom: 50px;
+      padding: 12px;
+      padding-bottom: 40px;
+      line-height: 1.45;
     }
-    .container { max-width: 420px; margin: 0 auto; }
+    .container { max-width: 430px; margin: 0 auto; }
     .card {
-      background: white;
-      border-radius: 18px;
+      background: #fff;
+      border-radius: 20px;
       padding: 18px;
-      box-shadow: 0 6px 18px rgba(255, 105, 180, 0.12);
+      box-shadow: 0 8px 24px rgba(255, 107, 157, 0.12);
       margin-bottom: 14px;
+      border: 1px solid rgba(255, 182, 193, 0.35);
     }
-    h1, h2 { text-align: center; color: #ff69b4; margin-bottom: 12px; }
-    h3 { font-size: 15px; color: #ff69b4; margin: 12px 0 8px; }
+    h1 { text-align: center; color: var(--pink); font-size: 22px; margin-bottom: 14px; }
+    h2 { text-align: center; color: var(--pink); font-size: 18px; margin-bottom: 12px; }
+    h3 { font-size: 14px; color: var(--pink); margin: 10px 0 8px; font-weight: 600; }
     input, select {
       width: 100%;
-      padding: 12px;
-      border: 2px solid #ffb6c1;
-      border-radius: 12px;
+      padding: 13px 14px;
+      border: 1.5px solid #ffc2d4;
+      border-radius: 14px;
       font-size: 15px;
       margin-bottom: 10px;
       outline: none;
+      background: #fff;
+      transition: border-color .2s;
     }
-    input:focus, select:focus { border-color: #ff69b4; }
+    input:focus, select:focus { border-color: var(--pink); }
     button {
       width: 100%;
-      padding: 12px;
-      background: #ff69b4;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--pink), var(--pink-dark));
       color: white;
       border: none;
-      border-radius: 12px;
+      border-radius: 14px;
       font-size: 15px;
-      font-weight: bold;
+      font-weight: 600;
       cursor: pointer;
       margin-bottom: 8px;
+      transition: transform .15s, opacity .15s;
     }
-    button.secondary { background: #ffb6c1; color: #5a3a5a; }
-    button.danger { background: #ff6b6b; }
+    button:active { transform: scale(0.97); }
+    button.secondary {
+      background: #fff;
+      color: var(--pink);
+      border: 1.5px solid #ffb6c9;
+    }
+    button.danger { background: linear-gradient(135deg, #ff6b6b, #ee5a5a); }
     button.link-btn {
       background: transparent;
-      color: #ff69b4;
+      color: var(--pink);
       font-size: 14px;
-      font-weight: normal;
-      padding: 8px;
-      margin-top: -4px;
+      font-weight: 500;
+      padding: 6px;
+      margin-top: -2px;
     }
     button.small {
-      padding: 7px 11px;
-      font-size: 13px;
+      padding: 7px 12px;
+      font-size: 12px;
       width: auto;
       display: inline-block;
-      margin: 3px 3px 0 0;
+      margin: 4px 4px 0 0;
+      border-radius: 20px;
     }
     .points {
-      font-size: 30px;
-      font-weight: bold;
+      font-size: 36px;
+      font-weight: 700;
       text-align: center;
-      color: #ff69b4;
-      margin: 10px 0;
+      color: var(--pink);
+      margin: 6px 0 4px;
+      letter-spacing: -0.5px;
     }
     .hidden { display: none !important; }
     .error { color: #e74c3c; text-align: center; margin-bottom: 8px; font-size: 13px; }
     .success { color: #27ae60; text-align: center; margin-bottom: 8px; font-size: 13px; }
     .partner-info {
-      background: #fff0f5;
-      padding: 10px;
-      border-radius: 12px;
+      background: var(--pink-light);
+      padding: 10px 12px;
+      border-radius: 14px;
       text-align: center;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       font-size: 14px;
+      color: #6b3a5a;
     }
-    .status { text-align: center; margin: 8px 0; font-size: 13px; color: #888; }
+    .status { text-align: center; margin: 8px 0; font-size: 13px; color: #999; }
     .nav {
       display: flex;
       gap: 6px;
       margin-bottom: 14px;
+      background: #fff;
+      padding: 5px;
+      border-radius: 16px;
+      box-shadow: 0 4px 14px rgba(255,107,157,0.1);
     }
     .nav button {
       flex: 1;
-      padding: 10px 6px;
+      padding: 10px 4px;
       font-size: 13px;
       margin-bottom: 0;
+      background: transparent;
+      color: #888;
+      border-radius: 12px;
+      font-weight: 500;
     }
-    .nav button.active { background: #ff1493; }
-    .task-item, .card-item {
-      background: #fff8fa;
-      border: 1px solid #ffd6e0;
-      border-radius: 14px;
-      padding: 12px;
+    .nav button.active {
+      background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+      color: white;
+      box-shadow: 0 4px 12px rgba(255,107,157,0.35);
+    }
+    .item {
+      background: #fffafc;
+      border: 1px solid #ffe0eb;
+      border-radius: 16px;
+      padding: 14px;
       margin-bottom: 10px;
+      transition: transform .15s;
     }
-    .task-item .title, .card-item .name { font-weight: bold; margin-bottom: 4px; font-size: 14px; }
-    .meta { font-size: 12px; color: #888; margin-bottom: 6px; }
-    .reward { color: #ff69b4; font-weight: bold; }
+    .item .title { font-weight: 600; margin-bottom: 4px; font-size: 14px; }
+    .meta { font-size: 12px; color: #888; margin-bottom: 4px; }
+    .reward { color: var(--pink); font-weight: 600; }
     .badge {
       display: inline-block;
-      padding: 2px 7px;
+      padding: 2px 8px;
       border-radius: 20px;
       font-size: 11px;
+      font-weight: 600;
       margin-left: 4px;
     }
-    .badge.N { background: #dfe6e9; color: #636e72; }
-    .badge.R { background: #74b9ff; color: #0984e3; }
-    .badge.SR { background: #a29bfe; color: #6c5ce7; }
-    .badge.SSR { background: #fd79a8; color: #e84393; }
-    .badge.UR { background: #ffeaa7; color: #d35400; }
-    .badge.pending { background: #ffeaa7; color: #d35400; }
-    .badge.completed { background: #81ecec; color: #00b894; }
-    .badge.confirmed { background: #55efc4; color: #00b894; }
+    .badge.N { background: #f1f2f6; color: #57606f; }
+    .badge.R { background: #dff9fb; color: #0984e3; }
+    .badge.SR { background: #e8e0ff; color: #6c5ce7; }
+    .badge.SSR { background: #ffe0f0; color: #e84393; }
+    .badge.UR { background: linear-gradient(135deg, #ffeaa7, #fdcb6e); color: #d35400; }
+    .badge.pending { background: #fff3cd; color: #856404; }
+    .badge.completed { background: #d4edda; color: #155724; }
+    .badge.confirmed { background: #cce5ff; color: #004085; }
     .section-title {
-      font-size: 14px;
-      font-weight: bold;
-      color: #ff69b4;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--pink);
       margin: 14px 0 8px;
-      border-bottom: 1px solid #ffd6e0;
-      padding-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .section-title::before {
+      content: "";
+      width: 4px;
+      height: 14px;
+      background: var(--pink);
+      border-radius: 2px;
     }
     .toast {
       position: fixed;
       bottom: 28px;
       left: 50%;
       transform: translateX(-50%);
-      background: #333;
+      background: rgba(40,40,40,0.92);
       color: white;
-      padding: 10px 18px;
+      padding: 11px 20px;
       border-radius: 30px;
       font-size: 13px;
       z-index: 999;
       display: none;
-      max-width: 90%;
+      max-width: 88%;
       text-align: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
     }
     .draw-result {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
       justify-content: center;
-      margin: 12px 0;
+      margin: 14px 0 6px;
     }
     .draw-card {
-      background: linear-gradient(135deg, #ffb3c1, #ffe5ec);
-      border-radius: 12px;
-      padding: 10px;
-      width: 100px;
+      width: 96px;
+      border-radius: 14px;
+      padding: 12px 8px;
       text-align: center;
       font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+      animation: popIn .35s ease;
+    }
+    .draw-card.N { background: linear-gradient(145deg, #a4b0be, #747d8c); }
+    .draw-card.R { background: linear-gradient(145deg, #70a1ff, #1e90ff); }
+    .draw-card.SR { background: linear-gradient(145deg, #a29bfe, #6c5ce7); }
+    .draw-card.SSR { background: linear-gradient(145deg, #fd79a8, #e84393); }
+    .draw-card.UR { background: linear-gradient(145deg, #ffeaa7, #fdcb6e); color: #6b3e00; }
+    @keyframes popIn {
+      from { transform: scale(0.6); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
     }
     .sub-nav {
       display: flex;
@@ -164,13 +219,52 @@
     }
     .sub-nav button {
       flex: 1;
-      padding: 8px;
+      padding: 9px;
       font-size: 13px;
       margin-bottom: 0;
-      background: #ffb6c1;
-      color: #5a3a5a;
+      background: #fff;
+      color: #888;
+      border: 1.5px solid #ffd6e0;
+      border-radius: 12px;
+      font-weight: 500;
     }
-    .sub-nav button.active { background: #ff69b4; color: white; }
+    .sub-nav button.active {
+      background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+      color: white;
+      border-color: transparent;
+    }
+    .card-visual {
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 10px;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .card-visual.N { background: linear-gradient(135deg, #a4b0be, #747d8c); }
+    .card-visual.R { background: linear-gradient(135deg, #70a1ff, #1e90ff); }
+    .card-visual.SR { background: linear-gradient(135deg, #a29bfe, #6c5ce7); }
+    .card-visual.SSR { background: linear-gradient(135deg, #fd79a8, #e84393); }
+    .card-visual.UR { background: linear-gradient(135deg, #ffeaa7, #fdcb6e); color: #6b3e00; }
+    .card-visual .name { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .card-visual .effect { font-size: 12px; opacity: 0.95; margin-bottom: 4px; }
+    .card-visual .exec { font-size: 11px; opacity: 0.85; }
+    .empty {
+      text-align: center;
+      padding: 20px 10px;
+      color: #bbb;
+      font-size: 13px;
+    }
+    .tip {
+      background: #fff8fb;
+      border: 1px dashed #ffb6c9;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #a05a7a;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -195,11 +289,12 @@
     <!-- 配對 -->
     <div id="pair-screen" class="card hidden">
       <h2>情侶配對</h2>
+      <div class="tip">把你的配對碼傳給另一半，或輸入對方的配對碼即可綁定。</div>
       <div id="pair-error" class="error"></div>
       <div id="pair-success" class="success"></div>
-      <p class="status">你的配對碼：</p>
+      <p class="status">你的配對碼</p>
       <div class="points" id="my-code">------</div>
-      <p class="status">輸入對方的配對碼：</p>
+      <p class="status">輸入對方的配對碼</p>
       <input type="text" id="partner-code" placeholder="6位配對碼" maxlength="6">
       <button type="button" onclick="pairWithCode()">確認配對</button>
       <button type="button" class="secondary" onclick="logout()">登出</button>
@@ -209,7 +304,7 @@
     <div id="home-screen" class="hidden">
       <div class="nav">
         <button type="button" id="nav-home" class="active" onclick="switchTab('home')">點數</button>
-        <button type="button" id="nav-tasks" onclick="switchTab('tasks')">任務</button>
+        <button type="button" id="nav-todo" onclick="switchTab('todo')">待辦</button>
         <button type="button" id="nav-cards" onclick="switchTab('cards')">卡片</button>
       </div>
 
@@ -219,35 +314,28 @@
         <div class="points" id="my-points">0</div>
         <div class="partner-info">已配對：<span id="partner-name">—</span></div>
         <h3>送點數給對方</h3>
-        <input type="number" id="send-amount" placeholder="輸入點數" min="1">
+        <input type="number" id="send-amount" placeholder="輸入要送的點數" min="1">
         <button type="button" onclick="sendPoints()">送出點數</button>
         <div id="home-message" class="success"></div>
-        <button type="button" class="secondary" onclick="logout()" style="margin-top:10px;">登出</button>
+        <div class="section-title">每日任務</div>
+        <div id="daily-tasks-list"></div>
+        <button type="button" class="secondary" onclick="logout()" style="margin-top:12px;">登出</button>
       </div>
 
-      <!-- 任務 -->
-      <div id="tab-tasks" class="hidden">
+      <!-- 待辦（統一確認入口） -->
+      <div id="tab-todo" class="hidden">
         <div class="card">
-          <h2>任務中心</h2>
+          <h2>待辦中心</h2>
+          <div class="tip">這裡集中顯示需要你確認或處理的事項（任務 + 卡片使用）。</div>
+          <div class="section-title">需要我確認</div>
+          <div id="pending-confirm-list"></div>
           <div class="section-title">建立自訂任務</div>
-          <input type="text" id="new-task-title" placeholder="任務內容">
+          <input type="text" id="new-task-title" placeholder="任務內容（例如：親一下）">
           <input type="number" id="new-task-reward" placeholder="獎勵點數" min="1">
           <button type="button" onclick="createCustomTask()">建立任務</button>
           <div id="task-create-msg" class="success"></div>
-        </div>
-        <div class="card">
-          <div class="section-title">每日任務</div>
-          <div id="daily-tasks-list"></div>
-        </div>
-        <div class="card">
-          <div class="section-title">等待我確認</div>
-          <div id="pending-confirm-list"></div>
-        </div>
-        <div class="card">
           <div class="section-title">我發起的任務</div>
           <div id="my-created-tasks"></div>
-        </div>
-        <div class="card">
           <div class="section-title">對方發起給我的</div>
           <div id="partner-tasks"></div>
         </div>
@@ -272,7 +360,7 @@
         <div id="card-inv" class="card hidden">
           <h2>我的卡庫</h2>
           <select id="rarity-filter" onchange="renderInventory()">
-            <option value="all">全部</option>
+            <option value="all">全部稀有度</option>
             <option value="N">N</option>
             <option value="R">R</option>
             <option value="SR">SR</option>
@@ -284,14 +372,11 @@
 
         <div id="card-craft" class="card hidden">
           <h2>卡片合成</h2>
-          <div class="section-title">3張 N → 1張 R</div>
-          <button type="button" onclick="craftCard('R')">合成 R</button>
-          <div class="section-title">3張 R → 1張 SR</div>
-          <button type="button" onclick="craftCard('SR')">合成 SR</button>
-          <div class="section-title">3張 SR → 1張 SSR</div>
-          <button type="button" onclick="craftCard('SSR')">合成 SSR</button>
-          <div class="section-title">3張 SSR → 1張 UR</div>
-          <button type="button" onclick="craftCard('UR')">合成 UR</button>
+          <div class="tip">3張低階卡片可合成1張高一階的卡片。</div>
+          <button type="button" onclick="craftCard('R')">3張 N → 合成 R</button>
+          <button type="button" onclick="craftCard('SR')">3張 R → 合成 SR</button>
+          <button type="button" onclick="craftCard('SSR')">3張 SR → 合成 SSR</button>
+          <button type="button" onclick="craftCard('UR')">3張 SSR → 合成 UR</button>
         </div>
       </div>
     </div>
@@ -352,7 +437,7 @@
       const t = document.getElementById("toast");
       t.textContent = msg;
       t.style.display = "block";
-      setTimeout(() => t.style.display = "none", 2200);
+      setTimeout(() => t.style.display = "none", 2300);
     }
 
     auth.onAuthStateChanged(async (user) => {
@@ -373,18 +458,19 @@
 
     function switchTab(tab) {
       document.getElementById("tab-home").classList.add("hidden");
-      document.getElementById("tab-tasks").classList.add("hidden");
+      document.getElementById("tab-todo").classList.add("hidden");
       document.getElementById("tab-cards").classList.add("hidden");
       document.getElementById("nav-home").classList.remove("active");
-      document.getElementById("nav-tasks").classList.remove("active");
+      document.getElementById("nav-todo").classList.remove("active");
       document.getElementById("nav-cards").classList.remove("active");
 
       if (tab === "home") {
         document.getElementById("tab-home").classList.remove("hidden");
         document.getElementById("nav-home").classList.add("active");
-      } else if (tab === "tasks") {
-        document.getElementById("tab-tasks").classList.remove("hidden");
-        document.getElementById("nav-tasks").classList.add("active");
+        loadDailyOnly();
+      } else if (tab === "todo") {
+        document.getElementById("tab-todo").classList.remove("hidden");
+        document.getElementById("nav-todo").classList.add("active");
         loadTasks();
       } else {
         document.getElementById("tab-cards").classList.remove("hidden");
@@ -420,8 +506,7 @@
       const password = document.getElementById("password").value;
       const errorEl = document.getElementById("auth-error");
       const successEl = document.getElementById("auth-success");
-      errorEl.textContent = "";
-      successEl.textContent = "";
+      errorEl.textContent = ""; successEl.textContent = "";
       if (!email || !password) { errorEl.textContent = "請填寫完整"; return; }
       try {
         const cred = await auth.createUserWithEmailAndPassword(email, password);
@@ -439,35 +524,23 @@
       const password = document.getElementById("password").value;
       const errorEl = document.getElementById("auth-error");
       const successEl = document.getElementById("auth-success");
-      errorEl.textContent = "";
-      successEl.textContent = "";
+      errorEl.textContent = ""; successEl.textContent = "";
       try { await auth.signInWithEmailAndPassword(email, password); }
       catch (err) { errorEl.textContent = "登入失敗，請檢查 Email 或密碼"; }
     }
 
-    // 忘記密碼
     async function forgotPassword() {
       const email = document.getElementById("email").value.trim();
       const errorEl = document.getElementById("auth-error");
       const successEl = document.getElementById("auth-success");
-      errorEl.textContent = "";
-      successEl.textContent = "";
-
-      if (!email) {
-        errorEl.textContent = "請先輸入你的 Email";
-        return;
-      }
-
+      errorEl.textContent = ""; successEl.textContent = "";
+      if (!email) { errorEl.textContent = "請先輸入你的 Email"; return; }
       try {
         await auth.sendPasswordResetEmail(email);
-        successEl.textContent = "重設密碼信已寄出！請檢查你的信箱（包括垃圾郵件）";
+        successEl.textContent = "重設密碼信已寄出！請檢查信箱（包括垃圾郵件）";
         showToast("重設信已寄出");
       } catch (err) {
-        if (err.code === "auth/user-not-found") {
-          errorEl.textContent = "找不到這個 Email 的帳號";
-        } else {
-          errorEl.textContent = "寄送失敗：" + err.message;
-        }
+        errorEl.textContent = err.code === "auth/user-not-found" ? "找不到這個 Email 的帳號" : "寄送失敗";
       }
     }
 
@@ -489,6 +562,7 @@
           document.getElementById("partner-name").textContent = pDoc.data().email.split("@")[0];
         }
         updateDrawProgress();
+        loadDailyOnly();
       } else {
         showScreen("pair-screen");
         document.getElementById("my-code").textContent = userData.pairCode;
@@ -529,7 +603,7 @@
       } catch (err) { msgEl.textContent = "失敗"; msgEl.className = "error"; }
     }
 
-    // ========== 任務系統 ==========
+    // ========== 任務 ==========
     async function createCustomTask() {
       const title = document.getElementById("new-task-title").value.trim();
       const reward = parseInt(document.getElementById("new-task-reward").value);
@@ -552,29 +626,31 @@
       } catch (err) { msgEl.textContent = "失敗"; msgEl.className = "error"; }
     }
 
+    async function loadDailyOnly() {
+      if (!userData?.partnerId) return;
+      const dailyList = document.getElementById("daily-tasks-list");
+      dailyList.innerHTML = "";
+      const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+      const dailySnap = await db.collection("tasks").where("assigneeId", "==", currentUser.uid).where("type", "==", "daily").get();
+      const myDaily = {};
+      dailySnap.forEach(doc => {
+        const t = doc.data();
+        const created = t.createdAt?.toDate?.() || new Date(0);
+        if (created >= todayStart) myDaily[t.dailyId] = { id: doc.id, status: t.status };
+      });
+      DAILY_TASKS.forEach(dt => {
+        const ex = myDaily[dt.id];
+        let status = "", btn = "";
+        if (!ex) btn = `<button type="button" class="small" onclick="claimDailyTask('${dt.id}','${dt.title}',${dt.reward})">我完成了</button>`;
+        else if (ex.status === "completed") status = `<span class="badge completed">等待確認</span>`;
+        else if (ex.status === "confirmed") status = `<span class="badge confirmed">已確認 +${dt.reward}</span>`;
+        dailyList.innerHTML += `<div class="item"><div class="title">${dt.title} ${status}</div><div class="meta">獎勵 <span class="reward">+${dt.reward}</span></div>${btn}</div>`;
+      });
+    }
+
     async function loadTasks() {
       if (!userData?.partnerId) return;
       try {
-        // 每日
-        const dailyList = document.getElementById("daily-tasks-list");
-        dailyList.innerHTML = "";
-        const todayStart = new Date(); todayStart.setHours(0,0,0,0);
-        const dailySnap = await db.collection("tasks").where("assigneeId", "==", currentUser.uid).where("type", "==", "daily").get();
-        const myDaily = {};
-        dailySnap.forEach(doc => {
-          const t = doc.data();
-          const created = t.createdAt?.toDate?.() || new Date(0);
-          if (created >= todayStart) myDaily[t.dailyId] = { id: doc.id, status: t.status };
-        });
-        DAILY_TASKS.forEach(dt => {
-          const ex = myDaily[dt.id];
-          let status = "", btn = "";
-          if (!ex) btn = `<button type="button" class="small" onclick="claimDailyTask('${dt.id}','${dt.title}',${dt.reward})">我完成了</button>`;
-          else if (ex.status === "completed") status = `<span class="badge completed">等待確認</span>`;
-          else if (ex.status === "confirmed") status = `<span class="badge confirmed">已確認 +${dt.reward}</span>`;
-          dailyList.innerHTML += `<div class="task-item"><div class="title">${dt.title} ${status}</div><div class="meta">獎勵 <span class="reward">+${dt.reward}</span></div>${btn}</div>`;
-        });
-
         // 等待確認
         const pending = document.getElementById("pending-confirm-list");
         pending.innerHTML = "";
@@ -595,10 +671,10 @@
 
           if (shouldShow) {
             has = true;
-            const title = isCard ? `🃏 使用卡片：${t.card?.name || t.title}` : t.title;
+            const title = isCard ? `🃏 ${t.card?.name || t.title}` : t.title;
             const extra = isCard ? `<div class="meta">效果：${t.card?.effect || ""}</div><div class="meta">執行：${t.card?.execution || ""}</div>` : "";
             pending.innerHTML += `
-              <div class="task-item">
+              <div class="item">
                 <div class="title">${title} <span class="badge completed">待確認</span></div>
                 ${extra}
                 <div class="meta">${isCard ? "卡片使用申請" : "獎勵 " + t.reward}</div>
@@ -607,34 +683,34 @@
               </div>`;
           }
         });
-        if (!has) pending.innerHTML = `<p class="status">暫時沒有</p>`;
+        if (!has) pending.innerHTML = `<div class="empty">暫時沒有需要確認的事項</div>`;
 
         // 我發起的
         const myC = document.getElementById("my-created-tasks");
         myC.innerHTML = "";
         const mySnap = await db.collection("tasks").where("creatorId", "==", currentUser.uid).get();
-        if (mySnap.empty) myC.innerHTML = `<p class="status">暫時沒有</p>`;
+        if (mySnap.empty) myC.innerHTML = `<div class="empty">暫時沒有</div>`;
         else mySnap.forEach(doc => {
           const t = doc.data();
           let s = t.status === "pending" ? "等待完成" : t.status === "completed" ? "等待確認" : t.status === "confirmed" ? "已確認" : "已拒絕";
           const prefix = t.type === "card_use" ? "🃏 " : "";
-          myC.innerHTML += `<div class="task-item"><div class="title">${prefix}${t.title || t.card?.name}</div><div class="meta">${s}</div></div>`;
+          myC.innerHTML += `<div class="item"><div class="title">${prefix}${t.title || t.card?.name}</div><div class="meta">${s}</div></div>`;
         });
 
         // 對方發起
         const pList = document.getElementById("partner-tasks");
         pList.innerHTML = "";
         const pSnap = await db.collection("tasks").where("assigneeId", "==", currentUser.uid).where("type", "==", "custom").get();
-        if (pSnap.empty) pList.innerHTML = `<p class="status">暫時沒有</p>`;
+        if (pSnap.empty) pList.innerHTML = `<div class="empty">暫時沒有</div>`;
         else pSnap.forEach(doc => {
           const t = doc.data();
           let status = "", btn = "";
           if (t.status === "pending") { status = "待完成"; btn = `<button type="button" class="small" onclick="completeTask('${doc.id}')">我完成了</button>`; }
           else if (t.status === "completed") status = "等待確認";
           else if (t.status === "confirmed") status = `已確認 +${t.reward}`;
-          pList.innerHTML += `<div class="task-item"><div class="title">${t.title}</div><div class="meta">${status}</div>${btn}</div>`;
+          pList.innerHTML += `<div class="item"><div class="title">${t.title}</div><div class="meta">${status}</div>${btn}</div>`;
         });
-      } catch (e) { console.error(e); showToast("載入任務失敗"); }
+      } catch (e) { console.error(e); showToast("載入失敗"); }
     }
 
     async function claimDailyTask(id, title, reward) {
@@ -643,8 +719,8 @@
           dailyId: id, title, reward, creatorId: "system", assigneeId: currentUser.uid,
           type: "daily", status: "completed", createdAt: new Date()
         });
-        showToast("已提交，等待確認");
-        loadTasks();
+        showToast("已提交，等待對方確認");
+        loadDailyOnly();
       } catch (e) { showToast("失敗"); }
     }
 
@@ -660,7 +736,7 @@
       try {
         if (type === "card_use") {
           await db.collection("tasks").doc(id).update({ status: "confirmed", confirmedAt: new Date() });
-          showToast("已確認卡片使用");
+          showToast("已確認卡片使用 ✨");
         } else {
           await db.collection("users").doc(assigneeId).update({ points: firebase.firestore.FieldValue.increment(reward) });
           await db.collection("tasks").doc(id).update({ status: "confirmed", confirmedAt: new Date() });
@@ -701,10 +777,10 @@
         }
         loadTasks();
         await loadUserData();
-      } catch (e) { console.error(e); showToast("操作失敗"); }
+      } catch (e) { showToast("操作失敗"); }
     }
 
-    // ========== 卡片系統 ==========
+    // ========== 卡片 ==========
     function updateDrawProgress() {
       const count = userData?.drawCount || 0;
       document.getElementById("draw-count").textContent = count;
@@ -739,8 +815,7 @@
           const pool = CARD_POOL.filter(c => c.rarity === rarity);
           const card = { ...pool[Math.floor(Math.random() * pool.length)] };
           newCards.push(card);
-
-          resultDiv.innerHTML += `<div class="draw-card"><div class="badge ${card.rarity}">${card.rarity}</div><div style="margin-top:6px;font-weight:bold;">${card.name}</div></div>`;
+          resultDiv.innerHTML += `<div class="draw-card ${card.rarity}"><div style="font-size:11px;opacity:.9;margin-bottom:4px;">${card.rarity}</div>${card.name}</div>`;
         }
 
         const newInv = [...(userData.inventory || []), ...newCards];
@@ -767,25 +842,26 @@
       if (filter !== "all") inv = inv.filter(c => c.rarity === filter);
 
       if (inv.length === 0) {
-        list.innerHTML = `<p class="status">卡庫空空如也</p>`;
+        list.innerHTML = `<div class="empty">卡庫空空如也，去抽卡吧 ✨</div>`;
         return;
       }
 
       list.innerHTML = inv.map((c) => {
         const realIndex = userData.inventory.findIndex((item) => item.id === c.id && item.name === c.name);
-        return `<div class="card-item">
-          <div class="name">${c.name} <span class="badge ${c.rarity}">${c.rarity}</span></div>
-          <div class="meta">效果：${c.effect}</div>
-          <div class="meta">執行：${c.execution}</div>
-          <button type="button" class="small" onclick="useCard(${realIndex})">使用（需對方確認）</button>
-        </div>`;
+        return `
+          <div class="card-visual ${c.rarity}">
+            <div class="name">${c.name} <span style="font-size:11px;opacity:.85;">${c.rarity}</span></div>
+            <div class="effect">${c.effect}</div>
+            <div class="exec">執行：${c.execution}</div>
+            <button type="button" class="small" style="margin-top:10px;background:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.4);" onclick="useCard(${realIndex})">使用（需確認）</button>
+          </div>`;
       }).join("");
     }
 
     async function useCard(index) {
       const card = userData.inventory[index];
       if (!card) return;
-      if (!confirm(`申請使用「${card.name}」？\n效果：${card.effect}\n\n對方確認後才會正式生效。`)) return;
+      if (!confirm(`申請使用「${card.name}」？\n\n效果：${card.effect}\n\n對方確認後才正式生效。`)) return;
 
       try {
         const newInv = [...userData.inventory];
@@ -816,9 +892,8 @@
       const needMap = { R: "N", SR: "R", SSR: "SR", UR: "SSR" };
       const need = needMap[target];
       const materials = (userData.inventory || []).filter(c => c.rarity === need);
-      if (materials.length < 3) { showToast(`需要3張${need}卡`); return; }
-
-      if (!confirm(`消耗3張${need}合成1張${target}？`)) return;
+      if (materials.length < 3) { showToast(`需要3張 ${need} 卡`); return; }
+      if (!confirm(`消耗3張 ${need} 合成1張 ${target}？`)) return;
 
       try {
         let count = 0;
