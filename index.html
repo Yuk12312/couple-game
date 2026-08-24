@@ -24,7 +24,7 @@
     }
     h1, h2, h3 { text-align: center; color: #ff69b4; margin-bottom: 12px; }
     h3 { font-size: 16px; margin-top: 8px; }
-    input, textarea, select {
+    input, textarea {
       width: 100%;
       padding: 12px;
       border: 2px solid #ffb6c1;
@@ -34,7 +34,7 @@
       outline: none;
       font-family: inherit;
     }
-    input:focus, textarea:focus { border-color: #ff69b4; }
+    input:focus { border-color: #ff69b4; }
     button {
       width: 100%;
       padding: 13px;
@@ -49,7 +49,7 @@
     }
     button.secondary { background: #ffb6c1; color: #5a3a5a; }
     button.danger { background: #ff6b6b; }
-    button.small { padding: 8px 12px; font-size: 13px; width: auto; display: inline-block; margin: 4px; }
+    button.small { padding: 8px 12px; font-size: 13px; width: auto; display: inline-block; margin: 4px 4px 0 0; }
     .points {
       font-size: 32px;
       font-weight: bold;
@@ -88,7 +88,7 @@
       padding: 14px;
       margin-bottom: 10px;
     }
-    .task-item .title { font-weight: bold; margin-bottom: 4px; }
+    .task-item .title { font-weight: bold; margin-bottom: 4px; font-size: 15px; }
     .task-item .meta { font-size: 12px; color: #888; margin-bottom: 8px; }
     .task-item .reward { color: #ff69b4; font-weight: bold; }
     .badge {
@@ -167,7 +167,6 @@
       <div id="tab-tasks" class="hidden">
         <div class="card">
           <h2>任務中心</h2>
-
           <div class="section-title">建立自訂任務</div>
           <input type="text" id="new-task-title" placeholder="任務內容（例如：親一下對方）">
           <input type="number" id="new-task-reward" placeholder="獎勵點數（從你帳戶扣除）" min="1">
@@ -176,8 +175,13 @@
         </div>
 
         <div class="card">
-          <div class="section-title">每日任務（需對方確認）</div>
+          <div class="section-title">每日任務（完成後需對方確認）</div>
           <div id="daily-tasks-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">等待我確認的任務</div>
+          <div id="pending-confirm-list"></div>
         </div>
 
         <div class="card">
@@ -186,7 +190,7 @@
         </div>
 
         <div class="card">
-          <div class="section-title">對方發起的任務 / 待確認</div>
+          <div class="section-title">對方發起給我的任務</div>
           <div id="partner-tasks"></div>
         </div>
       </div>
@@ -195,7 +199,6 @@
   </div>
 
   <script>
-    // ========== Firebase 設定 ==========
     const firebaseConfig = {
       apiKey: "AIzaSyAqmFiLSEKgYNlscQkwGc4TVlEeh_GV-F8",
       authDomain: "couple-card-game-d8852.firebaseapp.com",
@@ -212,9 +215,7 @@
 
     let currentUser = null;
     let userData = null;
-    let partnerData = null;
 
-    // 預設每日任務
     const DAILY_TASKS = [
       { id: "daily_1", title: "對對方說一句「我愛你」", reward: 5 },
       { id: "daily_2", title: "親一下對方", reward: 8 },
@@ -223,7 +224,6 @@
       { id: "daily_5", title: "一起做一件事（食飯/睇片/傾偈）", reward: 12 }
     ];
 
-    // ========== 登入狀態 ==========
     auth.onAuthStateChanged(async (user) => {
       if (user) {
         currentUser = user;
@@ -256,7 +256,6 @@
       }
     }
 
-    // ========== 註冊 / 登入 ==========
     async function register() {
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
@@ -280,10 +279,7 @@
           createdAt: new Date()
         });
 
-        await db.collection("codes").doc(code).set({
-          uid: cred.user.uid
-        });
-
+        await db.collection("codes").doc(code).set({ uid: cred.user.uid });
       } catch (err) {
         errorEl.textContent = err.message;
       }
@@ -310,7 +306,6 @@
       return Math.floor(100000 + Math.random() * 900000).toString();
     }
 
-    // ========== 載入用戶資料 ==========
     async function loadUserData() {
       const doc = await db.collection("users").doc(currentUser.uid).get();
       if (!doc.exists) return;
@@ -323,8 +318,7 @@
         
         const partnerDoc = await db.collection("users").doc(userData.partnerId).get();
         if (partnerDoc.exists) {
-          partnerData = partnerDoc.data();
-          document.getElementById("partner-name").textContent = partnerData.email.split("@")[0];
+          document.getElementById("partner-name").textContent = partnerDoc.data().email.split("@")[0];
         }
         switchTab("home");
       } else {
@@ -333,7 +327,6 @@
       }
     }
 
-    // ========== 配對 ==========
     async function pairWithCode() {
       const code = document.getElementById("partner-code").value.trim();
       const errorEl = document.getElementById("pair-error");
@@ -345,7 +338,6 @@
         errorEl.textContent = "請輸入 6 位配對碼";
         return;
       }
-
       if (code === userData.pairCode) {
         errorEl.textContent = "唔可以輸入自己的配對碼";
         return;
@@ -359,19 +351,16 @@
         }
 
         const partnerId = codeDoc.data().uid;
-
-        await db.collection("users").doc(currentUser.uid).update({ partnerId: partnerId });
+        await db.collection("users").doc(currentUser.uid).update({ partnerId });
         await db.collection("users").doc(partnerId).update({ partnerId: currentUser.uid });
 
         successEl.textContent = "配對成功！";
         setTimeout(() => loadUserData(), 800);
-
       } catch (err) {
         errorEl.textContent = "配對失敗：" + err.message;
       }
     }
 
-    // ========== 送點數 ==========
     async function sendPoints() {
       const amount = parseInt(document.getElementById("send-amount").value);
       const msgEl = document.getElementById("home-message");
@@ -382,7 +371,6 @@
         msgEl.className = "error";
         return;
       }
-
       if (userData.points < amount) {
         msgEl.textContent = "點數不足";
         msgEl.className = "error";
@@ -401,7 +389,6 @@
         msgEl.className = "success";
         document.getElementById("send-amount").value = "";
         await loadUserData();
-
       } catch (err) {
         msgEl.textContent = "送出失敗：" + err.message;
         msgEl.className = "error";
@@ -420,7 +407,6 @@
         msgEl.className = "error";
         return;
       }
-
       if (userData.points < reward) {
         msgEl.textContent = "你的點數不足支付獎勵";
         msgEl.className = "error";
@@ -428,7 +414,6 @@
       }
 
       try {
-        // 先扣除發起人點數（作為獎勵池）
         await db.collection("users").doc(currentUser.uid).update({
           points: firebase.firestore.FieldValue.increment(-reward)
         });
@@ -439,17 +424,16 @@
           creatorId: currentUser.uid,
           assigneeId: userData.partnerId,
           type: "custom",
-          status: "pending", // pending → completed → confirmed
+          status: "pending",
           createdAt: new Date()
         });
 
-        msgEl.textContent = "任務已建立！";
+        msgEl.textContent = "任務已建立！對方而家應該見得到";
         msgEl.className = "success";
         document.getElementById("new-task-title").value = "";
         document.getElementById("new-task-reward").value = "";
         await loadUserData();
         loadTasks();
-
       } catch (err) {
         msgEl.textContent = "建立失敗：" + err.message;
         msgEl.className = "error";
@@ -459,128 +443,157 @@
     async function loadTasks() {
       if (!userData || !userData.partnerId) return;
 
-      // 每日任務
-      const dailyList = document.getElementById("daily-tasks-list");
-      dailyList.innerHTML = "";
+      try {
+        // 1. 每日任務
+        const dailyList = document.getElementById("daily-tasks-list");
+        dailyList.innerHTML = "";
 
-      // 查詢今天已完成的每日任務
-      const today = new Date();
-      today.setHours(0,0,0,0);
+        const todayStart = new Date();
+        todayStart.setHours(0,0,0,0);
 
-      const dailySnap = await db.collection("tasks")
-        .where("type", "==", "daily")
-        .where("assigneeId", "==", currentUser.uid)
-        .get();
+        // 簡化查詢：只查自己作為 assignee 的每日任務
+        const dailySnap = await db.collection("tasks")
+          .where("assigneeId", "==", currentUser.uid)
+          .where("type", "==", "daily")
+          .get();
 
-      const completedDailyIds = {};
-      dailySnap.forEach(doc => {
-        const t = doc.data();
-        if (t.createdAt && t.createdAt.toDate() >= today) {
-          completedDailyIds[t.dailyId] = { id: doc.id, status: t.status };
-        }
-      });
-
-      DAILY_TASKS.forEach(dt => {
-        const existing = completedDailyIds[dt.id];
-        let statusHtml = "";
-        let btnHtml = "";
-
-        if (!existing) {
-          btnHtml = `<button class="small" onclick="claimDailyTask('${dt.id}', '${dt.title}', ${dt.reward})">我完成了</button>`;
-        } else if (existing.status === "completed") {
-          statusHtml = `<span class="badge completed">等待對方確認</span>`;
-        } else if (existing.status === "confirmed") {
-          statusHtml = `<span class="badge confirmed">已確認 +${dt.reward}</span>`;
-        }
-
-        dailyList.innerHTML += `
-          <div class="task-item">
-            <div class="title">${dt.title} ${statusHtml}</div>
-            <div class="meta">獎勵：<span class="reward">+${dt.reward} 點</span></div>
-            ${btnHtml}
-          </div>
-        `;
-      });
-
-      // 我發起的任務
-      const myCreated = document.getElementById("my-created-tasks");
-      myCreated.innerHTML = "";
-
-      const mySnap = await db.collection("tasks")
-        .where("creatorId", "==", currentUser.uid)
-        .orderBy("createdAt", "desc")
-        .limit(20)
-        .get();
-
-      if (mySnap.empty) {
-        myCreated.innerHTML = `<p class="status">暫時沒有</p>`;
-      } else {
-        mySnap.forEach(doc => {
+        const myDailyStatus = {};
+        dailySnap.forEach(doc => {
           const t = doc.data();
-          let statusText = "";
-          let actionHtml = "";
+          const created = t.createdAt?.toDate ? t.createdAt.toDate() : new Date(0);
+          if (created >= todayStart) {
+            myDailyStatus[t.dailyId] = { id: doc.id, status: t.status };
+          }
+        });
 
-          if (t.status === "pending") statusText = `<span class="badge pending">等待對方完成</span>`;
-          else if (t.status === "completed") {
-            statusText = `<span class="badge completed">對方已完成，等待你確認</span>`;
-            actionHtml = `
-              <button class="small" onclick="confirmTask('${doc.id}', ${t.reward}, '${t.assigneeId}')">確認完成</button>
-              <button class="small danger" onclick="rejectTask('${doc.id}', ${t.reward})">拒絕</button>
+        DAILY_TASKS.forEach(dt => {
+          const existing = myDailyStatus[dt.id];
+          let statusHtml = "";
+          let btnHtml = "";
+
+          if (!existing) {
+            btnHtml = `<button class="small" onclick="claimDailyTask('${dt.id}', '${dt.title}', ${dt.reward})">我完成了</button>`;
+          } else if (existing.status === "completed") {
+            statusHtml = `<span class="badge completed">等待對方確認</span>`;
+          } else if (existing.status === "confirmed") {
+            statusHtml = `<span class="badge confirmed">已確認 +${dt.reward}</span>`;
+          }
+
+          dailyList.innerHTML += `
+            <div class="task-item">
+              <div class="title">${dt.title} ${statusHtml}</div>
+              <div class="meta">獎勵：<span class="reward">+${dt.reward} 點</span></div>
+              ${btnHtml}
+            </div>
+          `;
+        });
+
+        // 2. 等待我確認的任務（對方完成的，無論是自訂定每日）
+        const pendingConfirm = document.getElementById("pending-confirm-list");
+        pendingConfirm.innerHTML = "";
+
+        // 查詢所有 status = completed 且 assignee 係對方 的任務
+        const confirmSnap = await db.collection("tasks")
+          .where("status", "==", "completed")
+          .get();
+
+        let hasPending = false;
+        confirmSnap.forEach(doc => {
+          const t = doc.data();
+          // 只顯示對方完成、等待我確認的
+          if (t.assigneeId === userData.partnerId || (t.type === "daily" && t.assigneeId === userData.partnerId)) {
+            hasPending = true;
+            pendingConfirm.innerHTML += `
+              <div class="task-item">
+                <div class="title">${t.title} <span class="badge completed">等待確認</span></div>
+                <div class="meta">獎勵：<span class="reward">${t.reward} 點</span> · ${t.type === "daily" ? "每日任務" : "自訂任務"}</div>
+                <button class="small" onclick="confirmTask('${doc.id}', ${t.reward}, '${t.assigneeId}')">確認完成</button>
+                <button class="small danger" onclick="rejectTask('${doc.id}', ${t.reward}, '${t.creatorId}')">拒絕</button>
+              </div>
             `;
-          } else if (t.status === "confirmed") {
-            statusText = `<span class="badge confirmed">已確認</span>`;
           }
-
-          myCreated.innerHTML += `
-            <div class="task-item">
-              <div class="title">${t.title} ${statusText}</div>
-              <div class="meta">獎勵：<span class="reward">${t.reward} 點</span></div>
-              ${actionHtml}
-            </div>
-          `;
         });
-      }
+        if (!hasPending) {
+          pendingConfirm.innerHTML = `<p class="status">暫時沒有需要確認的任務</p>`;
+        }
 
-      // 對方發起的任務（我是 assignee）
-      const partnerList = document.getElementById("partner-tasks");
-      partnerList.innerHTML = "";
+        // 3. 我發起的自訂任務
+        const myCreated = document.getElementById("my-created-tasks");
+        myCreated.innerHTML = "";
 
-      const partnerSnap = await db.collection("tasks")
-        .where("assigneeId", "==", currentUser.uid)
-        .where("type", "==", "custom")
-        .orderBy("createdAt", "desc")
-        .limit(20)
-        .get();
+        const mySnap = await db.collection("tasks")
+          .where("creatorId", "==", currentUser.uid)
+          .get();
 
-      if (partnerSnap.empty) {
-        partnerList.innerHTML = `<p class="status">暫時沒有</p>`;
-      } else {
-        partnerSnap.forEach(doc => {
-          const t = doc.data();
-          let statusText = "";
-          let actionHtml = "";
+        if (mySnap.empty) {
+          myCreated.innerHTML = `<p class="status">暫時沒有</p>`;
+        } else {
+          mySnap.forEach(doc => {
+            const t = doc.data();
+            let statusText = "";
+            let actionHtml = "";
 
-          if (t.status === "pending") {
-            statusText = `<span class="badge pending">待完成</span>`;
-            actionHtml = `<button class="small" onclick="completeTask('${doc.id}')">我完成了</button>`;
-          } else if (t.status === "completed") {
-            statusText = `<span class="badge completed">等待對方確認</span>`;
-          } else if (t.status === "confirmed") {
-            statusText = `<span class="badge confirmed">已確認 +${t.reward}</span>`;
-          }
+            if (t.status === "pending") statusText = `<span class="badge pending">等待對方完成</span>`;
+            else if (t.status === "completed") {
+              statusText = `<span class="badge completed">對方已完成</span>`;
+              // 確認按鈕已在上面「等待我確認」區塊
+            } else if (t.status === "confirmed") {
+              statusText = `<span class="badge confirmed">已確認</span>`;
+            } else if (t.status === "rejected") {
+              statusText = `<span class="badge pending">已拒絕</span>`;
+            }
 
-          partnerList.innerHTML += `
-            <div class="task-item">
-              <div class="title">${t.title} ${statusText}</div>
-              <div class="meta">獎勵：<span class="reward">+${t.reward} 點</span></div>
-              ${actionHtml}
-            </div>
-          `;
-        });
+            myCreated.innerHTML += `
+              <div class="task-item">
+                <div class="title">${t.title} ${statusText}</div>
+                <div class="meta">獎勵：<span class="reward">${t.reward} 點</span></div>
+              </div>
+            `;
+          });
+        }
+
+        // 4. 對方發起給我的自訂任務
+        const partnerList = document.getElementById("partner-tasks");
+        partnerList.innerHTML = "";
+
+        const partnerSnap = await db.collection("tasks")
+          .where("assigneeId", "==", currentUser.uid)
+          .where("type", "==", "custom")
+          .get();
+
+        if (partnerSnap.empty) {
+          partnerList.innerHTML = `<p class="status">暫時沒有</p>`;
+        } else {
+          partnerSnap.forEach(doc => {
+            const t = doc.data();
+            let statusText = "";
+            let actionHtml = "";
+
+            if (t.status === "pending") {
+              statusText = `<span class="badge pending">待完成</span>`;
+              actionHtml = `<button class="small" onclick="completeTask('${doc.id}')">我完成了</button>`;
+            } else if (t.status === "completed") {
+              statusText = `<span class="badge completed">等待對方確認</span>`;
+            } else if (t.status === "confirmed") {
+              statusText = `<span class="badge confirmed">已確認 +${t.reward}</span>`;
+            }
+
+            partnerList.innerHTML += `
+              <div class="task-item">
+                <div class="title">${t.title} ${statusText}</div>
+                <div class="meta">獎勵：<span class="reward">+${t.reward} 點</span></div>
+                ${actionHtml}
+              </div>
+            `;
+          });
+        }
+
+      } catch (err) {
+        console.error(err);
+        alert("載入任務失敗：" + err.message + "\n\n如果提到 index，請去 Firebase Console 建立索引。");
       }
     }
 
-    // 每日任務：我完成了（建立一筆等待確認的記錄）
     async function claimDailyTask(dailyId, title, reward) {
       try {
         await db.collection("tasks").add({
@@ -590,17 +603,16 @@
           creatorId: "system",
           assigneeId: currentUser.uid,
           type: "daily",
-          status: "completed", // 直接進入等待確認
+          status: "completed",
           createdAt: new Date()
         });
-        alert("已提交，等待對方確認後才會加點數");
+        alert("已提交！等待對方確認後先會加點數");
         loadTasks();
       } catch (err) {
         alert("提交失敗：" + err.message);
       }
     }
 
-    // 自訂任務：我完成了
     async function completeTask(taskId) {
       try {
         await db.collection("tasks").doc(taskId).update({
@@ -614,7 +626,6 @@
       }
     }
 
-    // 發起人確認任務
     async function confirmTask(taskId, reward, assigneeId) {
       try {
         // 把點數轉給完成者
@@ -627,7 +638,7 @@
           confirmedAt: new Date()
         });
 
-        alert("已確認，點數已發給對方");
+        alert("已確認，點數已發給對方！");
         loadTasks();
         await loadUserData();
       } catch (err) {
@@ -635,18 +646,21 @@
       }
     }
 
-    // 拒絕任務（退回點數給發起人）
-    async function rejectTask(taskId, reward) {
-      if (!confirm("確定拒絕？點數會退回給你")) return;
+    async function rejectTask(taskId, reward, creatorId) {
+      if (!confirm("確定拒絕？點數會退回給發起人")) return;
 
       try {
-        await db.collection("users").doc(currentUser.uid).update({
-          points: firebase.firestore.FieldValue.increment(reward)
-        });
+        // 退回點數給發起人（如果係自訂任務）
+        if (creatorId && creatorId !== "system") {
+          await db.collection("users").doc(creatorId).update({
+            points: firebase.firestore.FieldValue.increment(reward)
+          });
+        }
+
         await db.collection("tasks").doc(taskId).update({
           status: "rejected"
         });
-        alert("已拒絕，點數已退回");
+        alert("已拒絕");
         loadTasks();
         await loadUserData();
       } catch (err) {
