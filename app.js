@@ -1,15 +1,4 @@
 // app.js
-console.log("app.js 已載入");
-
-window.onerror = function(msg, url, line) {
-  alert("JS錯誤: " + msg + " (行 " + line + ")");
-  return false;
-};
-
-let currentUser = null;
-let userData = null;
-
-// app.js
 
 let currentUser = null;
 let userData = null;
@@ -40,4 +29,4 @@ async function register() {
   errorEl.textContent = "";
 
   if (!email || !password) {
-    errorEl.textContent = "請填
+    errorEl.textContent
